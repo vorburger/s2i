@@ -30,7 +30,9 @@ and see "hello, world" when accessing http://localhost:8080 - it works!
 
 ## OpenShift
 
-To do the same as above directly inside your OpenShift instance like this:
+[Just click here](???) (but [see more to come here](https://github.com/fabric8-launcher/launcher-backend/issues/433)).
+
+Alternatively, manually do the same as above directly inside your OpenShift instance like this:
 
     oc new-app fabric8/s2i-java~https://github.com/vorburger/s2i-java-example
     oc expose svc/s2i-java-example --port=8080
