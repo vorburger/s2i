@@ -80,21 +80,26 @@ script_dir() {
 
 # Try hard to find a sane default jar-file
 auto_detect_jar_file() {
+  set -x
   local dir="$1"
 
   # Filter out temporary jars from the shade plugin which start with 'original-'
   local old_dir="$(pwd)"
   cd ${dir}
   if [ $? = 0 ]; then
-    local nr_jars="$(ls 2>/dev/null | grep -e '.*\.jar$' | grep -v '^original-' | wc -l | awk '{print $1}')"
+    # NB: Find both (single) JAR *or* WAR <https://github.com/fabric8io-images/run-java-sh/issues/79>
+    local nr_jars="$(ls 2>/dev/null | grep -e '.*\.jar$' -e '.*\.war$' | grep -v '^original-' | wc -l | awk '{print $1}')"
     if [ "${nr_jars}" = 1 ]; then
-      ls *.jar | grep -v '^original-'
-      exit 0
+      local jar="$(ls 2>/dev/null *.jar *.war | grep -v '^original-')"
+      echo ${jar}
+    else
+      cd "${old_dir}"
+      echo "ERROR: Neither JAVA_MAIN_CLASS nor JAVA_APP_JAR is set and ${nr_jars} found in ${dir} (1 expected)"
+      exit -1
     fi
-    cd "${old_dir}"
-    echo "ERROR: Neither JAVA_MAIN_CLASS nor JAVA_APP_JAR is set and ${nr_jars} found in ${dir} (1 expected)"
   else
     echo "ERROR: No directory ${dir} found for auto detection"
+    exit -1
   fi
 }
 
@@ -209,12 +214,17 @@ load_env() {
   # JAVA_LIB_DIR defaults to JAVA_APP_DIR
   export JAVA_LIB_DIR="${JAVA_LIB_DIR:-${JAVA_APP_DIR}}"
   if [ -z "${JAVA_MAIN_CLASS:-}" ] && [ -z "${JAVA_APP_JAR:-}" ]; then
+echo "hello-213"
     JAVA_APP_JAR="$(auto_detect_jar_file ${JAVA_APP_DIR})"
+echo "hello-215"
     check_error "${JAVA_APP_JAR}"
+echo "hello-217"
   fi
 
   if [ -n "${JAVA_APP_JAR:-}" ]; then
+echo "hi-221"
     local jar="$(find_jar_file ${JAVA_APP_JAR} ${JAVA_APP_DIR} ${JAVA_LIB_DIR})"
+echo "hi-223"
     check_error "${jar}"
     export JAVA_APP_JAR="${jar}"
   else
@@ -369,7 +379,11 @@ jit_options() {
 # Switch on diagnostics except when switched off
 diagnostics_options() {
   if [ -n "${JAVA_DIAGNOSTICS:-}" ]; then
-    echo "-XX:NativeMemoryTracking=summary -XX:+PrintGC -XX:+PrintGCDateStamps -XX:+PrintGCTimeStamps -XX:+UnlockDiagnosticVMOptions"
+    if [ "${JAVA_MAJOR_VERSION:-0}" -ge "11" ]; then
+      echo "-XX:NativeMemoryTracking=summary -Xlog:gc*:stdout:time -XX:+UnlockDiagnosticVMOptions"
+    else
+      echo "-XX:NativeMemoryTracking=summary -XX:+PrintGC -XX:+PrintGCDateStamps -XX:+PrintGCTimeStamps -XX:+UnlockDiagnosticVMOptions"
+    fi
   fi
 }
 
@@ -582,7 +596,7 @@ options() {
 run() {
   # Initialize environment
   load_env $(script_dir)
-
+echo "hi-591"
   local args
   cd ${JAVA_APP_DIR}
   if [ -n "${JAVA_MAIN_CLASS:-}" ] ; then
