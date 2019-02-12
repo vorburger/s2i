@@ -88,10 +88,10 @@ auto_detect_jar_file() {
   cd ${dir}
   if [ $? = 0 ]; then
     # NB: Find both (single) JAR *or* WAR <https://github.com/fabric8io-images/run-java-sh/issues/79>
-    local nr_jars="$(ls 2>/dev/null | grep -e '.*\.jar$' -e '.*\.war$' | grep -v '^original-' | wc -l | awk '{print $1}')"
+    local jars="$(ls 2>/dev/null | grep -e '.*\.jar$' -e '.*\.war$' | grep -v '^original-')"
+    local nr_jars="$(echo ${jars} | wc -l | awk '{print $1}')"
     if [ "${nr_jars}" = 1 ]; then
-      local jar="$(ls 2>/dev/null *.jar *.war | grep -v '^original-')"
-      echo ${jar}
+      echo ${jars}
     else
       cd "${old_dir}"
       echo "ERROR: Neither JAVA_MAIN_CLASS nor JAVA_APP_JAR is set and ${nr_jars} found in ${dir} (1 expected)"
