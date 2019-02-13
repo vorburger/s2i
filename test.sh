@@ -31,7 +31,7 @@ function test_app() {
 
 function test_metrics() {
   local name=$1
-  local port="9779"
+  local port="8778"
 
   local container_id=$(docker run --name ${name}-test -d -p ${port} ${name})
 
@@ -39,7 +39,7 @@ function test_metrics() {
   sleep 5
 
   local metrics_port="$(docker port ${container_id} ${port}|sed 's/0.0.0.0://')"
-  local metrics_reply=$(curl --silent --show-error http://localhost:$metrics_port/metrics)
+  local metrics_reply=$(curl --silent --show-error http://localhost:$metrics_port/jolokia)
 
   case $metrics_reply in
     *"jvm_threads_current"*)
