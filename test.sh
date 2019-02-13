@@ -91,28 +91,26 @@ function test_container() {
 # ==================================================================================
 
 function test_image() {
-  local dir=$1
-  local name=$2
-
-  docker build ${dir} -t ${name}
+    local name=$1
+    local container_name_base="${1//\//_}"
 
   # ----------------------------------------------------------------------------------
   # Presence of any required tools
   #  * Issues #171 and #184: unzip is required for Spring Boot devtools support
   # ----------------------------------------------------------------------------------
 
-  docker run --rm --name ${name}-test-unzip ${name} unzip
+  docker run --rm --name ${container_name_base}-test-unzip ${name} unzip
 
   # ----------------------------------------------------------------------------------
   # Maven
   # ----------------------------------------------------------------------------------
 
-  s2i build --copy java/examples/maven ${name} ${name}-maven-example
+  s2i build --copy java/examples/maven ${name} ${container_name_base}-maven-example
 
   # Now rebuild incrementally, it should not re-download .m2
-  s2i build --copy java/examples/maven ${name} ${name}-maven-example --incremental
+  # s2i build --copy java/examples/maven ${name} ${container_name_base}-maven-example --incremental
 
-  test_container "${name}-maven-example"
+  test_container "${container_name_base}-maven-example"
 
 
   # --------------------------------------------------------------------------------
@@ -165,7 +163,6 @@ function test_image() {
 
 # ==================================================================================
 
-cd java ; fish-pepper ; cd ..
-test_image "java/images/centos-java11/" "s2i-java-11"
-test_image "java/images/fedora-java11/" "s2i-java-11-fedora"
-test_image "java/images/centos/" "s2i-java"
+# test_image "centos/openjdk-11-centos7"
+## test_image "s2i-java-11-fedora"
+test_image "centos/openjdk-8-centos7"
